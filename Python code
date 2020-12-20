@@ -1,0 +1,330 @@
+#Import essential libraries
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from time import sleep
+
+import sys
+
+
+#ask stock ticker input from user
+ticker= input("Enter the company's stock ticker: ")
+class Investment_bot():
+   
+    # Initialize the browser window    
+    def init(self):
+        self.driver = webdriver.Chrome()
+        
+       
+    
+    def open(self):
+        # define investment count variable. If this variable reaches 
+        investment_count = 0
+        driver= self.driver
+        driver.maximize_window()
+        driver.get('https://www.morningstar.ca/ca/')
+        
+        
+        #Use "sleep" to tell the compiler to do nothing as the webpage loads
+        sleep(24)
+        search_btn = self.driver.find_element_by_xpath('//*[@id="quoteSearch"]')
+        search_btn.clear()
+        search_btn.send_keys(ticker)
+        sleep(7)
+        search_btn.send_keys(Keys.RETURN)
+        sleep(6)
+
+        financial_btn = driver.find_element_by_xpath('//*[@id="tab-stocks-financials"]').click()
+        sleep(6)
+
+        #Get price to book value
+        price_book = driver.find_element_by_xpath('//*[@id="sal-ii-report"]/div[1]/div[4]/sal-components/section/div/div/div[2]/div/div[2]/div/div/div[2]/div[1]/sal-components-key-ratios/div/div[2]/div/div[1]/div[1]/ul/li[1]/div/div[2]')
+        price_contentbook = float(price_book.get_attribute('innerHTML'))
+        
+
+        #Get price to earnings
+        price_earnings = driver.find_element_by_xpath('//*[@id="sal-ii-report"]/div[1]/div[4]/sal-components/section/div/div/div[2]/div/div[2]/div/div/div[2]/div[1]/sal-components-key-ratios/div/div[2]/div/div[1]/div[1]/ul/li[4]/div/div[2]')
+        price_contentearning = float(price_earnings.get_attribute('innerHTML'))
+        
+
+        #Get Return on Equity
+        return_equity = driver.find_element_by_xpath('//*[@id="sal-ii-report"]/div[1]/div[4]/sal-components/section/div/div/div[2]/div/div[2]/div/div/div[2]/div[1]/sal-components-key-ratios/div/div[2]/div/div[2]/div[2]/ul/li[2]/div/div[2]')
+        roe_count = float(return_equity.get_attribute('innerHTML'))
+        
+
+        #Get Return on assets
+        return_assets = driver.find_element_by_xpath('//*[@id="sal-ii-report"]/div[1]/div[4]/sal-components/section/div/div/div[2]/div/div[2]/div/div/div[2]/div[1]/sal-components-key-ratios/div/div[2]/div/div[2]/div[2]/ul/li[1]/div/div[2]')
+        roa_count = float(return_assets.get_attribute('innerHTML'))
+        
+
+
+        #Debt to equity
+        debt_to_equity = driver.find_element_by_xpath('//*[@id="sal-ii-report"]/div[1]/div[4]/sal-components/section/div/div/div[2]/div/div[2]/div/div/div[2]/div[1]/sal-components-key-ratios/div/div[2]/div/div[2]/div[1]/ul/li[4]/div/div[2]')
+        debtequity_count= float(debt_to_equity.get_attribute('innerHTML'))
+       
+
+        #Current ratio
+        current_ratio = driver.find_element_by_xpath('//*[@id="sal-ii-report"]/div[1]/div[4]/sal-components/section/div/div/div[2]/div/div[2]/div/div/div[2]/div[1]/sal-components-key-ratios/div/div[2]/div/div[2]/div[1]/ul/li[2]/div/div[2]')
+        current_ratio_count = float(current_ratio.get_attribute('innerHTML'))
+        
+
+        #Earnings growth 2010 Q1 to 2019 Q4 on macrotrends
+        driver.get('https://www.macrotrends.net/stocks')
+        sleep(2)
+        search_earnings_btn = self.driver.find_element_by_xpath('/html/body/div[1]/div[1]/div[3]/form/div[1]/div[1]/span[1]/input')
+
+        
+        search_earnings_btn.send_keys(ticker, '- pe ratio')
+        sleep(3)
+        count = 1
+
+        #while loop to select through the dropdown list
+        while count < 5:
+                   search_earnings_btn.send_keys(Keys.DOWN)
+                   count = count+1
+        
+        
+        search_earnings_btn.send_keys(Keys.RETURN)
+        sleep(15)
+
+        #while loop to scroll down the page
+        count1 = 0
+        while count1 < 45:
+            driver.find_element_by_xpath('//*[@id="myTabs"]/li[1]/a').send_keys(Keys.DOWN)
+            count1 = count1+1
+
+        sleep(2)
+
+        
+
+        earnings_2019_Q4 = driver.find_element_by_xpath('//*[@id="style-1"]/table/tbody/tr[5]/td[3]')
+        earnings_2019_count = earnings_2019_Q4.get_attribute('innerHTML')
+        
+        earnings_2019_number = float(earnings_2019_count.strip('$'))
+
+        earnings_2010_Q1 = driver.find_element_by_xpath('//*[@id="style-1"]/table/tbody/tr[44]/td[3]')
+        earnings_2010_count = earnings_2010_Q1.get_attribute('innerHTML')
+        
+        earnings_2010_number = float(earnings_2010_count.strip('$'))
+
+        
+        #calculating percent growth for earnings
+        percent_growth = (((earnings_2019_number/earnings_2010_number)**(1 /10))-(1))*(100)
+        
+        
+         
+
+        #Output to user the data retrieved 
+        print('Is the price to book value between 0.5 and 2.5 ?')
+        if (0.5 < price_contentbook < 2.5):
+            investment_count = investment_count + 2
+            print('YES', '\n'  )
+        else:
+            print('NO', '\n')
+
+
+        print('Is the price to earnings value between 4 and 16 ?')
+        if (4 < price_contentearning < 16):
+            investment_count = investment_count + 2.5
+            print('YES', '\n'   )
+        else:
+            print('NO', '\n')
+
+
+        print('Is the return on equity greater than 7% ?')
+        if (7 < roe_count):
+            investment_count = investment_count + 2
+            print('YES', '\n'   )
+        else:
+            print('NO', '\n')
+
+
+        print('Is the return on assets greater than 5% ?')
+        if (5 < roa_count):
+            investment_count = investment_count + 1
+            print('YES', '\n'  )
+        else:
+            print('NO', '\n')
+
+
+        print('Is the debt to equity ratio less than 0.8 ?')
+        if (0.8 > debtequity_count):
+            investment_count = investment_count + 1
+            print('YES', '\n'  )
+        else:
+            print('NO', '\n')
+
+
+        print('Is the current ratio greater than 1.4 ?')
+        if (1.4 < current_ratio_count):
+            investment_count = investment_count + 2
+            print('YES', '\n'  )
+        else:
+            print('NO', '\n')
+
+
+        print('Is the earnings growth higher than the P/E ?')
+        if (percent_growth >price_contentearning):
+            investment_count = investment_count + 2
+            print('YES', '\n'  )
+        else:
+            print('NO', '\n')
+        
+
+        #Invest or not
+        print('Should you invest in this company? ')
+        if (investment_count > 9):
+            print('YES, this company is fairly priced and appears to be profitable.', '\n')
+        else:
+            print('NO', '\n')
+
+        
+
+        
+        driver.minimize_window()
+        user_discount = float(input('Enter the annual return you want from this company: '))
+
+        driver.maximize_window()
+            
+
+        #Grab free cash flow data
+        driver.get('https://www.bing.com/')
+        sleep(2)
+        bing_search = driver.find_element_by_name('q')
+
+        
+        bing_search.send_keys(ticker, ' 10 year free cash flow macrotrends')
+        
+        bing_search.send_keys(Keys.RETURN)
+        sleep(1)
+
+        free_cash_flow_link = driver.find_element_by_xpath('//*[@id="b_results"]/li[1]/h2/a').click()
+
+        
+        sleep(8)
+
+        count2 = 0
+        while count2 < 45:
+            driver.find_element_by_xpath('//*[@id="myTabs"]/li[7]/a').send_keys(Keys.DOWN)
+            count2= count2+1
+
+        sleep(2)
+        #Free cash flow - retrieve data
+        free_2020 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[1]/td[2]')
+        free_2019 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[2]/td[2]')
+        free_2018 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[3]/td[2]')
+        free_2017 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[4]/td[2]')
+        free_2016 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[5]/td[2]')
+        free_2015 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[6]/td[2]')
+        free_2014 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[7]/td[2]')
+        free_2013 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[8]/td[2]')
+        free_2012 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[9]/td[2]')
+        free_2011 = driver.find_element_by_xpath('//*[@id="style-1"]/div[1]/table/tbody/tr[10]/td[2]')
+        
+        #convert to float to be able to use it in calculation
+        cash_2020 = float(free_2020.get_attribute('innerHTML').replace(',',''))
+        cash_2019 = float(free_2019.get_attribute('innerHTML').replace(',',''))
+        cash_2018 = float(free_2018.get_attribute('innerHTML').replace(',',''))
+        cash_2017 = float(free_2017.get_attribute('innerHTML').replace(',',''))
+        cash_2016 = float(free_2016.get_attribute('innerHTML').replace(',',''))
+        cash_2015 = float(free_2015.get_attribute('innerHTML').replace(',',''))
+        cash_2014 = float(free_2014.get_attribute('innerHTML').replace(',',''))
+        cash_2013 = float(free_2013.get_attribute('innerHTML').replace(',',''))
+        cash_2012 = float(free_2012.get_attribute('innerHTML').replace(',',''))
+        cash_2011 = float(free_2011.get_attribute('innerHTML').replace(',',''))
+
+
+        #grab shares outstanding number
+        driver.get('https://www.macrotrends.net/stocks')
+        sleep(2)
+        search_earnings1_btn = self.driver.find_element_by_xpath('/html/body/div[1]/div[1]/div[3]/form/div[1]/div[1]/span[1]/input')
+
+        
+        search_earnings1_btn.send_keys(ticker, '- shares outstanding')
+        sleep(1)
+
+        search_earnings1_btn.send_keys(Keys.DOWN)
+        search_earnings1_btn.send_keys(Keys.RETURN)
+
+        sleep(14)
+
+        
+
+
+
+        count3 = 0
+        while count3 < 45:
+            driver.find_element_by_xpath('//*[@id="myTabs"]/li[7]/a').send_keys(Keys.DOWN)
+            count3= count3+1
+
+        sleep(3)
+        
+        shares_outstanding_number = driver.find_element_by_xpath('//*[@id="style-1"]/div[2]/table/tbody/tr[1]/td[2]')
+
+        shares_outstanding = float(shares_outstanding_number.get_attribute('innerHTML').replace(',',''))
+
+        driver.minimize_window()
+
+        #calculation average cash flow
+        avg_cashflow = (cash_2020 + cash_2019 + cash_2018 + cash_2017 + cash_2016 + cash_2015 + cash_2014 +cash_2013 + cash_2012 + cash_2011) /10
+
+        #cash flow annual growth
+        annual_growth_cash = round(((cash_2020/cash_2011)**(1 /10))- 1, 2)
+
+        
+        first_year_cashflow = ((1+annual_growth_cash)*avg_cashflow)
+        second_year_cashflow = ((1+annual_growth_cash)*first_year_cashflow)
+        third_year_cashflow = ((1+annual_growth_cash)*second_year_cashflow)
+        fourth_year_cashflow = ((1+annual_growth_cash)*third_year_cashflow)
+        fifth_year_cashflow = ((1+annual_growth_cash)*fourth_year_cashflow)
+        sixth_year_cashflow = ((1+annual_growth_cash)*fifth_year_cashflow)
+        seventh_year_cashflow = ((1+annual_growth_cash)*sixth_year_cashflow)
+        eighth_year_cashflow = ((1+annual_growth_cash)*seventh_year_cashflow)
+        ninth_year_cashflow = ((1+annual_growth_cash)*eighth_year_cashflow)
+        tenth_year_cashflow = ((1+annual_growth_cash)*ninth_year_cashflow)
+        
+        #Discounted cash flow from 2020 to 2029
+        dcf_2021 =  first_year_cashflow * (1/((1+(user_discount/100))**1))
+        dcf_2022 =  second_year_cashflow * (1/((1+(user_discount/100))**2))
+        dcf_2023 =  third_year_cashflow * (1/((1+(user_discount/100))**3))
+        dcf_2024 =  fourth_year_cashflow * (1/((1+(user_discount/100))**4))
+        dcf_2025 =  fifth_year_cashflow * (1/((1+(user_discount/100))**5))
+        dcf_2026 =  sixth_year_cashflow * (1/((1+(user_discount/100))**6))
+        dcf_2027 =  seventh_year_cashflow * (1/((1+(user_discount/100))**7))
+        dcf_2028 =  eighth_year_cashflow * (1/((1+(user_discount/100))**8))
+        dcf_2029 =  ninth_year_cashflow * (1/((1+(user_discount/100))**9))
+        dcf_2030 =  tenth_year_cashflow * (1/((1+(user_discount/100))**10))
+
+
+
+        free_cashflow_2030 = (((1+annual_growth_cash)**10)*avg_cashflow)
+
+        #Sum discounted cash flow
+        dcf_sum = (dcf_2021 + dcf_2022 + dcf_2023 + dcf_2024 + dcf_2025 + dcf_2026 + dcf_2027 + dcf_2028 + dcf_2029 + dcf_2030)
+
+        #discounted perpetuity cash flow - this is important because a business will likely continue to grow after the 10 years - I will use a 1% rate to be conservative.
+
+        
+        pcf_2030 = (free_cashflow_2030 * (1+0.01)) / ((user_discount/100) - 0.01)
+
+                     
+        dpcf_2030 = pcf_2030 / ((1+ (user_discount/100))**10)
+        
+
+
+        #find out the fair value of each share according to the annual return user wants
+        intrinsic_value = (dpcf_2030 + dcf_sum) / shares_outstanding
+
+        
+        
+        print('You need to buy this company for $',round(intrinsic_value,2), 'in order to achieve a ', user_discount  ,'% annual return using discounted cash flows')
+        
+        
+        
+
+
+#create class object
+bot = Investment_bot()
+
+#access methods of object
+bot.init()
+bot.open()
